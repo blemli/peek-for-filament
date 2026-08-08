@@ -2,151 +2,202 @@
 
 namespace Blemli\Peek;
 
-use Filament\Support\Assets\AlpineComponent;
+use Blemli\Peek\Activity\PeekActivityLogger;
+use Blemli\Peek\Authorization\PeekAuthorizer;
+use Blemli\Peek\Commands\UninstallCommand;
+use Blemli\Peek\Content\HeuristicContentSource;
+use Blemli\Peek\Content\PeekContent;
+use Blemli\Peek\Content\ResourceContentSource;
+use Blemli\Peek\Routing\RecordUrlResolver;
+use Blemli\Peek\Testing\TestsPeek;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
-use Filament\Support\Facades\FilamentIcon;
-use Illuminate\Filesystem\Filesystem;
 use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Blemli\Peek\Commands\PeekCommand;
-use Blemli\Peek\Testing\TestsPeek;
 
 class PeekServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'peek-for-filament';
+    public static string $name = 'peek';
 
-    public static string $viewNamespace = 'peek-for-filament';
+    public static string $viewNamespace = 'peek';
 
     public function configurePackage(Package $package): void
     {
-        /*
-         * This class is a Package Service Provider
-         *
-         * More info: https://github.com/spatie/laravel-package-tools
-         */
         $package->name(static::$name)
-            ->hasCommands($this->getCommands())
-            ->hasInstallCommand(function (InstallCommand $command) {
+            ->hasConfigFile()
+            ->hasViews(static::$viewNamespace)
+            ->hasTranslations()
+            ->hasCommands([UninstallCommand::class])
+            ->hasInstallCommand(function (InstallCommand $command): void {
                 $command
                     ->publishConfigFile()
-                    ->publishMigrations()
-                    ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub('blemli/peek-for-filament');
+                    ->endWith(fn (InstallCommand $command) => $this->promptAttachToPanelProvider($command));
             });
-
-        $configFileName = $package->shortName();
-
-        if (file_exists($package->basePath("/../config/{$configFileName}.php"))) {
-            $package->hasConfigFile();
-        }
-
-        if (file_exists($package->basePath('/../database/migrations'))) {
-            $package->hasMigrations($this->getMigrations());
-        }
-
-        if (file_exists($package->basePath('/../resources/lang'))) {
-            $package->hasTranslations();
-        }
-
-        if (file_exists($package->basePath('/../resources/views'))) {
-            $package->hasViews(static::$viewNamespace);
-        }
     }
 
-    public function packageRegistered(): void {}
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(PeekAuthorizer::class);
+        $this->app->singleton(RecordUrlResolver::class);
+        $this->app->singleton(PeekActivityLogger::class);
+        $this->app->singleton(ResourceContentSource::class);
+        $this->app->singleton(HeuristicContentSource::class);
+        $this->app->singleton(PeekContent::class);
+        $this->app->singleton(Peek::class);
+        $this->app->singleton(PeekPlugin::class);
+    }
 
     public function packageBooted(): void
     {
-        // Asset Registration
-        FilamentAsset::register(
-            $this->getAssets(),
-            $this->getAssetPackageName()
-        );
+        FilamentAsset::register($this->getAssets(), $this->getAssetPackageName());
 
-        FilamentAsset::registerScriptData(
-            $this->getScriptData(),
-            $this->getAssetPackageName()
-        );
-
-        // Icon Registration
-        FilamentIcon::register($this->getIcons());
-
-        // Handle Stubs
-        if (app()->runningInConsole()) {
-            foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
-                $this->publishes([
-                    $file->getRealPath() => base_path("stubs/peek-for-filament/{$file->getFilename()}"),
-                ], 'peek-for-filament-stubs');
-            }
+        if (class_exists(Testable::class)) {
+            Testable::mixin(new TestsPeek);
         }
-
-        // Testing
-        Testable::mixin(new TestsPeek);
     }
 
-    protected function getAssetPackageName(): ?string
+    protected function getAssetPackageName(): string
     {
         return 'blemli/peek-for-filament';
     }
 
     /**
-     * @return array<Asset>
+     * @return array<int, Asset>
      */
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('peek-for-filament', __DIR__ . '/../resources/dist/components/peek-for-filament.js'),
-            // Css::make('peek-for-filament-styles', __DIR__ . '/../resources/dist/peek-for-filament.css'),
-            // Js::make('peek-for-filament-scripts', __DIR__ . '/../resources/dist/peek-for-filament.js'),
+            Js::make('peek', __DIR__ . '/../resources/dist/peek.js'),
+            Css::make('peek', __DIR__ . '/../resources/css/peek.css'),
         ];
     }
 
-    /**
-     * @return array<class-string>
-     */
-    protected function getCommands(): array
+    protected function promptAttachToPanelProvider(InstallCommand $command): void
     {
-        return [
-            PeekCommand::class,
-        ];
+        $candidates = $this->findPanelProviderCandidates();
+
+        if ($candidates === []) {
+            $this->printAttachSnippet($command, 'No PanelProvider found under app/Providers/Filament/.');
+
+            return;
+        }
+
+        if (count($candidates) === 1) {
+            $path = $candidates[0];
+        } else {
+            $choice = $command->choice(
+                'Multiple PanelProviders found. Which one should Peek attach to?',
+                [...$candidates, '(none — skip and print snippet)'],
+            );
+
+            if ($choice === '(none — skip and print snippet)') {
+                $this->printAttachSnippet($command, 'Skipped.');
+
+                return;
+            }
+
+            $path = (string) $choice;
+        }
+
+        $contents = (string) file_get_contents($path);
+
+        if (str_contains($contents, 'PeekPlugin')) {
+            $command->info("PeekPlugin is already attached in {$path}.");
+
+            return;
+        }
+
+        $patched = $this->insertPluginCall($contents);
+
+        if ($patched === null) {
+            $this->printAttachSnippet(
+                $command,
+                "Could not safely patch {$path} — the panel chain looks unusual.",
+            );
+
+            return;
+        }
+
+        $relative = $this->relativePath($path);
+
+        if (! $command->confirm("Attach PeekPlugin to {$relative}?", true)) {
+            $this->printAttachSnippet($command, 'Skipped.');
+
+            return;
+        }
+
+        file_put_contents($path, $patched);
+        $command->info("Peek attached in {$relative}.");
     }
 
     /**
-     * @return array<string>
+     * @return array<int, string>
      */
-    protected function getIcons(): array
+    protected function findPanelProviderCandidates(): array
     {
-        return [];
+        $dir = app_path('Providers/Filament');
+
+        if (! is_dir($dir)) {
+            return [];
+        }
+
+        $files = glob($dir . DIRECTORY_SEPARATOR . '*PanelProvider.php') ?: [];
+
+        return array_values(array_filter($files, is_file(...)));
     }
 
-    /**
-     * @return array<string>
-     */
-    protected function getRoutes(): array
+    protected function insertPluginCall(string $contents): ?string
     {
-        return [];
+        // Match the panel(...) method up to the trailing `;` of its return chain,
+        // then insert the plugin call before that semicolon.
+        $pattern = '/(public function panel\(Panel \$panel\)\s*:\s*Panel\s*\{\s*return \$panel(?:[^;]+))(;)/s';
+
+        $replaced = preg_replace_callback(
+            $pattern,
+            static function (array $matches): string {
+                $chain = rtrim($matches[1]);
+                $indent = '            ';
+
+                return "{$chain}\n{$indent}->plugin(\\Blemli\\Peek\\PeekPlugin::make())" . $matches[2];
+            },
+            $contents,
+            1,
+            $count,
+        );
+
+        if ($count === 0 || $replaced === null) {
+            return null;
+        }
+
+        return $replaced;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    protected function getScriptData(): array
+    protected function printAttachSnippet(InstallCommand $command, string $reason): void
     {
-        return [];
+        $command->warn($reason);
+        $command->line('');
+        $command->line('Add this to your PanelProvider::panel() method:');
+        $command->line('');
+        $command->line('    use Blemli\\Peek\\PeekPlugin;');
+        $command->line('');
+        $command->line('    return $panel');
+        $command->line('        // ... existing config ...');
+        $command->line('        ->plugin(PeekPlugin::make());');
+        $command->line('');
     }
 
-    /**
-     * @return array<string>
-     */
-    protected function getMigrations(): array
+    protected function relativePath(string $path): string
     {
-        return [
-            'create_peek-for-filament_table',
-        ];
+        $base = base_path();
+
+        if (str_starts_with($path, $base)) {
+            return ltrim(substr($path, strlen($base)), DIRECTORY_SEPARATOR);
+        }
+
+        return $path;
     }
 }

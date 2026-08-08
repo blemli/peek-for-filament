@@ -4,6 +4,7 @@ namespace Blemli\Peek\Tests;
 
 use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
 use BladeUI\Icons\BladeIconsServiceProvider;
+use Blemli\Peek\PeekServiceProvider;
 use Filament\Actions\ActionsServiceProvider;
 use Filament\FilamentServiceProvider;
 use Filament\Forms\FormsServiceProvider;
@@ -13,28 +14,12 @@ use Filament\Schemas\SchemasServiceProvider;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Livewire\LivewireServiceProvider;
-use Orchestra\Testbench\Concerns\WithWorkbench;
 use Orchestra\Testbench\TestCase as Orchestra;
 use RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider;
-use Blemli\Peek\PeekServiceProvider;
 
 class TestCase extends Orchestra
 {
-    use LazilyRefreshDatabase;
-    use WithWorkbench;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Blemli\\Peek\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
-        );
-    }
-
     protected function getPackageProviders($app)
     {
         $providers = [
@@ -62,10 +47,10 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app): void
     {
         $app['config']->set('database.default', 'testing');
-    }
-
-    protected function defineDatabaseMigrations(): void
-    {
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $app['config']->set('database.connections.testing', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+        ]);
+        $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
     }
 }
