@@ -2,16 +2,16 @@
 
 namespace Blemli\Peek\Content;
 
-class PeekField
+final class PeekField
 {
     public function __construct(
-        public string $type, // text | address | link | money | date
+        public string $type, // text | address | link | money
         public ?string $label = null,
         public mixed $value = null,
     ) {}
 
-    public static function make(string $type, ?string $label = null, mixed $value = null): static
+    public static function make(string $type, ?string $label = null, mixed $value = null): self
     {
-        return new static($type, $label, $value);
+        return new self($type, $label, $value);
     }
 }

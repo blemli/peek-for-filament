@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class AttachesPeekToColumns
 {
-    protected static bool $registered = false;
-
     public static function register(): void
     {
-        if (static::$registered) {
+        // Container-bound guard: Filament's ComponentManager is app-scoped, so
+        // the registration must repeat for every fresh app (tests, Octane).
+        if (app()->bound('peek.attached-columns')) {
             return;
         }
 
-        static::$registered = true;
+        app()->instance('peek.attached-columns', true);
 
         Column::configureUsing(function (Column $column): void {
             $column->extraCellAttributes(

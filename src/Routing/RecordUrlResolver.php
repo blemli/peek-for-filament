@@ -124,7 +124,9 @@ class RecordUrlResolver
     {
         // Compare against each resource's own route base name; longest prefix
         // wins so nested resources (parent-prefixed names) match correctly.
-        $unprefixed = substr($routeName, strlen("filament.{$panel->getId()}."));
+        // Filament v5 already includes the "filament.{panel}." prefix in the
+        // base name, v4 does not — normalize to the fully-prefixed form.
+        $fullPrefix = "filament.{$panel->getId()}.";
 
         $match = null;
         $matchLength = 0;
@@ -132,7 +134,11 @@ class RecordUrlResolver
         foreach ($panel->getResources() as $resource) {
             $baseName = $resource::getRouteBaseName($panel);
 
-            if (! str_starts_with($unprefixed, $baseName . '.')) {
+            if (! str_starts_with($baseName, $fullPrefix)) {
+                $baseName = $fullPrefix . $baseName;
+            }
+
+            if (! str_starts_with($routeName, $baseName . '.')) {
                 continue;
             }
 

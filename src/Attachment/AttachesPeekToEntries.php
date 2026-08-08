@@ -7,15 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class AttachesPeekToEntries
 {
-    protected static bool $registered = false;
-
     public static function register(): void
     {
-        if (static::$registered) {
+        // Container-bound guard: see AttachesPeekToColumns.
+        if (app()->bound('peek.attached-entries')) {
             return;
         }
 
-        static::$registered = true;
+        app()->instance('peek.attached-entries', true);
 
         Entry::configureUsing(function (Entry $entry): void {
             $entry->extraEntryWrapperAttributes(

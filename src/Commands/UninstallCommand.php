@@ -87,7 +87,7 @@ class UninstallCommand extends Command
     }
 
     /**
-     * @return array<string>  "path:line" hits
+     * @return array<string> "path:line" hits
      */
     protected function findPluginRegistrations(): array
     {

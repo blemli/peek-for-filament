@@ -4,12 +4,12 @@ namespace Blemli\Peek\Content;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PeekData
+final class PeekData
 {
     /**
      * @param  array<PeekField>  $fields  label/value pairs for the meta grid
-     * @param  array<array{type: string, value: string, label?: string|null}>  $chips  badge/color/icon chips
-     * @param  array{title: string, image: string|null, token: string|null, url: string|null}|null  $person
+     * @param  array<array{type: string, value: string, label: string|null}>  $chips  badge/color/icon chips
+     * @param  array{record: Model, title: string|null}|null  $person
      */
     public function __construct(
         public ?string $title = null,
@@ -24,9 +24,9 @@ class PeekData
         public ?array $person = null,
     ) {}
 
-    public static function make(): static
+    public static function make(): self
     {
-        return new static;
+        return new self;
     }
 
     public function title(?string $title): static
