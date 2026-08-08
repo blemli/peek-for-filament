@@ -1,87 +1,37 @@
-# don't move, just peek
+# Peek for Filament
+
+> don't move, just peek
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/blemli/peek-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/peek-for-filament)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/blemli/peek-for-filament/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/peek-for-filament/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/blemli/peek-for-filament/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/blemli/peek-for-filament/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/blemli/peek-for-filament.svg?style=flat-square)](https://packagist.org/packages/blemli/peek-for-filament)
+[![Tests](https://img.shields.io/github/actions/workflow/status/blemli/peek-for-filament/tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/blemli/peek-for-filament/actions/workflows/tests.yml)
+[![License](https://img.shields.io/packagist/l/blemli/peek-for-filament.svg?style=flat-square)](LICENSE.md)
 
+Hover any linked record — relationship columns, infolist entries, global search results, breadcrumbs — and a small preview card pops up. Zero configuration: register the plugin and every linked record lights up. Peeks respect your policies (a dedicated `peek()` ability wins, otherwise `view()` applies) and a denial looks exactly like "nothing there".
 
-
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+![Demo](.github/peek-demo.gif)
 
 ## Installation
 
-You can install the package via composer:
-
 ```bash
 composer require blemli/peek-for-filament
-```
-
-> [!IMPORTANT]
-> If you have not set up a custom theme and are using Filament Panels follow the instructions in the [Filament Docs](https://filamentphp.com/docs/4.x/styling/overview#creating-a-custom-theme) first.
-
-After setting up a custom theme add the plugin's views to your theme css file or your app's css file if using the standalone packages.
-
-```css
-@source '../../../../vendor/blemli/peek-for-filament/resources/**/*.blade.php';
-```
-
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="peek-for-filament-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="peek-for-filament-config"
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="peek-for-filament-views"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
+php artisan peek:install
 ```
 
 ## Usage
 
 ```php
-$peek = new Blemli\Peek();
-echo $peek->echoPhrase('Hello, Blemli!');
+$panel->plugin(
+    \Blemli\Peek\PeekPlugin::make()
+        ->peekDepth(2)     // optional: peeks inside peeks
+        ->logActivity(),   // optional: "Stephan peeked at XY" via spatie/laravel-activitylog
+);
+
+TextColumn::make('author.name')->noPeeking();          // opt out per column/entry
+TextColumn::make('note')->peekable(fn ($r) => $r->author); // force-enable a plain column
 ```
 
-## Testing
-
-```bash
-composer test
-```
-
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
-
-## Credits
-
-- [Problemli GmbH](https://github.com/blemli)
-- [All Contributors](../../contributors)
+Custom cards: create `resources/views/peek/{model-kebab}.blade.php`, or register `->peekView(Post::class, 'peek.post')`. Remove everything with `php artisan peek:uninstall`.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+MIT © [blemli](https://github.com/blemli)

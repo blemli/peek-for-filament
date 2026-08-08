@@ -55,6 +55,10 @@ document.addEventListener('alpine:init', () => {
         // --- trigger discovery ---
 
         findTrigger(el) {
+            // An ancestor's peek token always beats anchors nested inside it —
+            // Filament wraps cell content in row-click anchors, and the
+            // relationship token on the <td> is the more specific target.
+            let anchorTrigger = null
             let node = el
 
             while (node && node !== document.documentElement) {
@@ -67,18 +71,19 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 if (
+                    ! anchorTrigger &&
                     this.config.anchors &&
                     node.tagName === 'A' &&
                     node.href &&
                     this.isPeekableAnchor(node)
                 ) {
-                    return { el: node, target: 'url:' + node.href }
+                    anchorTrigger = { el: node, target: 'url:' + node.href }
                 }
 
                 node = node.parentElement
             }
 
-            return null
+            return anchorTrigger
         },
 
         isPeekableAnchor(node) {
