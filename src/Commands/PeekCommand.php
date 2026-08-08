@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Blemli\Peek\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class PeekCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'peek-for-filament';
 
     public $description = 'My command';
 

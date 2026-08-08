@@ -1,33 +1,35 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "blemli/peek-for-filament",
+    "description": "don't move, just peek",
     "keywords": [
-        ":vendor_name",
+        "blemli",
         "laravel",
         "filamentphp",
         "filament",
         "filament-plugin",
-        ":package_slug"
+        "peek",
+        "peek-for-filament"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/blemli/peek-for-filament",
     "support": {
-        "issues": "https://github.com/:vendor_slug/:package_slug/issues",
-        "source": "https://github.com/:vendor_slug/:package_slug"
+        "issues": "https://github.com/blemli/peek-for-filament/issues",
+        "source": "https://github.com/blemli/peek-for-filament"
     },
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Problemli GmbH",
+            "email": "stephan@problem.li",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.2",
-        "filament/filament": "^5.0",
-        "filament/forms": "^5.0",
-        "filament/tables": "^5.0",
+        "filament/filament": "^4.0|^5.0",
         "spatie/laravel-package-tools": "^1.15.0"
+    },
+    "suggest": {
+        "spatie/laravel-activitylog": "Required to log peek events via PeekPlugin::make()->logActivity()"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
@@ -39,17 +41,16 @@
         "pestphp/pest-plugin-laravel": "^3.0|^4.0",
         "pestphp/pest-plugin-livewire": "^3.0|^4.0",
         "rector/rector": "^2.0",
-        "spatie/laravel-ray": "^1.26"
+        "spatie/laravel-activitylog": "^4.7"
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Blemli\\Peek\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/"
+            "Blemli\\Peek\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -64,10 +65,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Blemli\\Peek\\PeekServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "Peek": "Blemli\\Peek\\Facades\\Peek"
             }
         }
     },

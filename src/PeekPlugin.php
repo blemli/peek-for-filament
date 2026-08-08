@@ -1,15 +1,15 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace Blemli\Peek;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
-class SkeletonPlugin implements Plugin
+class PeekPlugin implements Plugin
 {
     public function getId(): string
     {
-        return 'skeleton';
+        return 'peek-for-filament';
     }
 
     public function register(Panel $panel): void
