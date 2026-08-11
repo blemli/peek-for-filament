@@ -19,7 +19,7 @@ class AttachesPeekToColumns
 
         Column::configureUsing(function (Column $column): void {
             $column->extraCellAttributes(
-                fn (?Model $record): array => PeekTarget::forColumn($column, $record),
+                fn (Model | array | null $record): array => PeekTarget::forColumn($column, $record),
                 merge: true,
             );
         });

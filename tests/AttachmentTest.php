@@ -39,6 +39,23 @@ it('does not attach to multiple-record relationships', function () {
         ->not->toHaveKey('data-peek');
 });
 
+it('ignores array-backed records instead of crashing', function () {
+    $attributes = TextColumn::make('title')->record(['title' => 'Hello'])->getExtraCellAttributes();
+
+    expect($attributes)->not->toHaveKey('data-peek');
+});
+
+it('still resolves an explicit peekable() target for array-backed records', function () {
+    $author = Author::create(['name' => 'Jane']);
+
+    $attributes = TextColumn::make('title')
+        ->peekable(fn () => $author)
+        ->record(['title' => 'Hello'])
+        ->getExtraCellAttributes();
+
+    expect(PeekToken::parse($attributes['data-peek'] ?? ''))->toBe([Author::class, $author->id]);
+});
+
 it('marks noPeeking columns with an opt-out attribute', function () {
     $author = Author::create(['name' => 'Jane']);
     $post = Post::create(['title' => 'Hello', 'author_id' => $author->id]);

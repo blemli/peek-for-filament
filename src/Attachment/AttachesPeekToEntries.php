@@ -18,7 +18,7 @@ class AttachesPeekToEntries
 
         Entry::configureUsing(function (Entry $entry): void {
             $entry->extraEntryWrapperAttributes(
-                fn (?Model $record): array => PeekTarget::forEntry($entry, $record),
+                fn (Model | array | null $record): array => PeekTarget::forEntry($entry, $record),
                 merge: true,
             );
         });

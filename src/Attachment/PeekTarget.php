@@ -19,7 +19,7 @@ class PeekTarget
     /**
      * @return array<string, string>
      */
-    public static function forColumn(Column $column, ?Model $record): array
+    public static function forColumn(Column $column, Model | array | null $record): array
     {
         try {
             if (! $record instanceof Model) {
@@ -41,7 +41,7 @@ class PeekTarget
     /**
      * @return array<string, string>
      */
-    public static function forEntry(Entry $entry, ?Model $record): array
+    public static function forEntry(Entry $entry, Model | array | null $record): array
     {
         try {
             if (! $record instanceof Model) {
@@ -65,7 +65,7 @@ class PeekTarget
      *
      * @return array<string, string>
      */
-    public static function forced(mixed $target, ?Model $record, Column | Entry $component): array
+    public static function forced(mixed $target, Model | array | null $record, Column | Entry $component): array
     {
         try {
             if ($target instanceof Closure) {

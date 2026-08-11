@@ -23,7 +23,7 @@ final class PeekColumnMacros
     {
         return function (mixed $target = null) {
             return $this->extraCellAttributes(
-                fn (?Model $record): array => PeekTarget::forced($target, $record, $this),
+                fn (Model | array | null $record): array => PeekTarget::forced($target, $record, $this),
                 merge: true,
             );
         };
