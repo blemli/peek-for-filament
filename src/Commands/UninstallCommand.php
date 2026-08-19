@@ -47,14 +47,7 @@ class UninstallCommand extends Command
 
         $this->pruneEmptyBlemliDirs();
 
-        $registrations = $this->findPluginRegistrations();
-
-        foreach ($registrations as $hit) {
-            $this->warn("PeekPlugin is still registered in {$hit} — remove the ->plugin(...) call,");
-            $this->warn('or the panel will crash after `composer remove blemli/peek-for-filament`.');
-        }
-
-        $this->offerComposerRemove($registrations);
+        $this->offerComposerRemove($this->awaitPluginRemoval());
 
         $this->info('Peek uninstalled.');
 
@@ -84,6 +77,56 @@ class UninstallCommand extends Command
                 $this->info('Removed empty ' . $dir);
             }
         }
+    }
+
+    /**
+     * Peek never edits the panel provider itself — it points at the line and
+     * waits until the developer says it is gone, re-checking each time.
+     *
+     * @return array<string> the registrations still on disk
+     */
+    protected function awaitPluginRemoval(): array
+    {
+        $registrations = $this->findPluginRegistrations();
+
+        if ($registrations === [] || $this->option('force')) {
+            $this->reportRegistrations($registrations);
+
+            return $registrations;
+        }
+
+        while ($registrations !== []) {
+            $this->reportRegistrations($registrations);
+
+            if (! $this->confirm('Removed it?', false)) {
+                return $registrations;
+            }
+
+            $registrations = $this->findPluginRegistrations();
+        }
+
+        $this->info('No PeekPlugin registration left — the panel is safe to boot without peek.');
+
+        return [];
+    }
+
+    /**
+     * @param  array<string>  $registrations
+     */
+    protected function reportRegistrations(array $registrations): void
+    {
+        if ($registrations === []) {
+            return;
+        }
+
+        $this->line('');
+
+        foreach ($registrations as $hit) {
+            $this->warn("PeekPlugin is still registered in {$hit} — remove the ->plugin(...) call,");
+            $this->warn('or the panel will crash after `composer remove blemli/peek-for-filament`.');
+        }
+
+        $this->line('');
     }
 
     /**

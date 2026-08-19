@@ -30,7 +30,7 @@ TextColumn::make('author.name')->noPeeking();          // opt out per column/ent
 TextColumn::make('note')->peekable(fn ($r) => $r->author); // force-enable a plain column
 ```
 
-Custom cards: create `resources/views/peek/{model-kebab}.blade.php`, or register `->peekView(Post::class, 'peek.post')`. Remove everything with `php artisan peek:uninstall`.
+Custom cards: create `resources/views/peek/{model-kebab}.blade.php`, or register `->peekView(Post::class, 'peek.post')`. Remove everything with `php artisan peek:uninstall` — it deletes what was published and waits until you have taken `->plugin(PeekPlugin::make())` out of your panel provider before offering to run `composer remove` (it never edits your code).
 
 ## License
 
